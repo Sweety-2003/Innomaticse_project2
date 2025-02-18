@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #game {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-gap: 27px;
+        }
+        .card {
+            width: 120px;
+            height: 150px;
+            background-color: white;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .matched {
+            background-color: lightgreen;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Memory Match Game</h1>
+    <div id="timer">Time left: <span id="time">60</span>s</div>
+    <div id="score">Score: <span id="scoreValue">0</span></div>
+    <div id="game"></div>
+    <div id="message"></div>
+
+    <script>
+        const symbols = ['🍎', '🍌', '🍇', '🍓', '🍉', '🍊', '🍍', '🍒'];
+        let cardValues = [...symbols, ...symbols];
+        cardValues = cardValues.sort(() => 0.5 - Math.random());
+        const gameContainer = document.getElementById('game');
+        const timeSpan = document.getElementById('time');
+        const scoreSpan = document.getElementById('scoreValue');
+        const message = document.getElementById('message');
+        let firstCard, secondCard;
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let score = 0;
+        let timeLeft = 60;
+
+        function createBoard() {
+            cardValues.forEach(value => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.setAttribute('data-value', value);
+                card.addEventListener('click', flipCard);
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.innerText = this.getAttribute('data-value');
+            this.classList.add('flipped');
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            lockBoard = true;
+
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const isMatch = firstCard.getAttribute('data-value') === secondCard.getAttribute('data-value');
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            score++;
+            scoreSpan.innerText = score;
+            message.innerText = '';
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            resetBoard();
+        }
+
+        function unflipCards() {
+            message.innerText = 'Try again!';
+            setTimeout(() => {
+                firstCard.innerText = '';
+                secondCard.innerText = '';
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+
+            if (score === symbols.length) {
+                message.innerText = 'Congratulations! You have matched all the pairs.';
+                clearInterval(timer);
+            }
+        }
+
+        let timer = setInterval(() => {
+            timeLeft--;
+            timeSpan.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                message.innerText = 'Time is up! Try again!';
+            }
+        }, 1000);
+
+        createBoard();
+    </script>
+
+</body>
+</html>
